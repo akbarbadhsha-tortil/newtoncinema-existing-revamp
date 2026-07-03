@@ -3,7 +3,8 @@ import { useState } from "react";
 export const menu = [
   { num: "01", label: "Projects", href: "/projects" },
   { num: "02", label: "Submit a Project", href: "/sumbit-project" },
-  { num: "03", label: "Get in touch with us", href: "/contact" },
+  { num: "03", label: "News", disabled: true },
+  { num: "04", label: "Get in touch with us", href: "/contact" },
 ];
 
 export const socials = [
@@ -185,12 +186,19 @@ export function SiteHeader() {
             </button>
           </div>
           <nav aria-label="Menu">
-            {menu.map((item) => (
-              <a href={item.href} onClick={() => setMenuOpen(false)} key={item.num}>
-                <span>{item.num}</span>
-                <b>{item.label}</b>
-              </a>
-            ))}
+            {menu.map((item) =>
+              item.disabled ? (
+                <button type="button" className="nc-menu-disabled" aria-disabled="true" key={item.num}>
+                  <span>{item.num}</span>
+                  <b>{item.label}</b>
+                </button>
+              ) : (
+                <a href={item.href} onClick={() => setMenuOpen(false)} key={item.num}>
+                  <span>{item.num}</span>
+                  <b>{item.label}</b>
+                </a>
+              )
+            )}
             <div className="nc-menu-follow" aria-label="Follow Newton Cinema">
               <span>Follow</span>
               <SocialLinks className="nc-menu-socials" />
@@ -225,6 +233,7 @@ export function SiteFooter() {
             <p>Explore</p>
             <a href="/projects">Projects</a>
             <a href="/sumbit-project">Submit a Project</a>
+            <span className="nc-footer-disabled" aria-disabled="true">News</span>
             <a href="/contact">Get in touch with us</a>
           </nav>
           <div>

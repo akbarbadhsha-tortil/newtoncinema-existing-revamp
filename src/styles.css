@@ -902,9 +902,15 @@ button {
   font-size: 15px;
 }
 
-.nc-footer-grid nav a {
+.nc-footer-grid nav a,
+.nc-footer-disabled {
   width: fit-content;
   transition: color 0.2s ease;
+}
+
+.nc-footer-disabled {
+  cursor: default;
+  opacity: 0.62;
 }
 
 .nc-footer-grid nav a:hover {
@@ -1100,7 +1106,8 @@ button {
   gap: 6px;
 }
 
-.nc-menu-overlay nav a {
+.nc-menu-overlay nav a,
+.nc-menu-overlay nav .nc-menu-disabled {
   display: flex;
   align-items: baseline;
   gap: 20px;
@@ -1109,11 +1116,24 @@ button {
   color: var(--text);
 }
 
+.nc-menu-overlay nav .nc-menu-disabled {
+  appearance: none;
+  border-top: 0;
+  border-right: 0;
+  border-left: 0;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: default;
+  opacity: 0.62;
+}
+
 .nc-menu-overlay nav a:hover {
   color: var(--gold);
 }
 
-.nc-menu-overlay nav a > span {
+.nc-menu-overlay nav a > span,
+.nc-menu-overlay nav .nc-menu-disabled > span {
   width: 28px;
   color: #7a7a7a;
   font-size: 12px;
