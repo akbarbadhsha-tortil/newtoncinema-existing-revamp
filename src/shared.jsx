@@ -3,8 +3,7 @@ import { useState } from "react";
 export const menu = [
   { num: "01", label: "Projects", href: "/projects" },
   { num: "02", label: "Submit a Project", href: "/sumbit-project" },
-  { num: "03", label: "News", href: "/news" },
-  { num: "04", label: "Get in touch with us", href: "/contact" },
+  { num: "03", label: "Get in touch with us", href: "/contact" },
 ];
 
 export const socials = [
@@ -226,7 +225,6 @@ export function SiteFooter() {
             <p>Explore</p>
             <a href="/projects">Projects</a>
             <a href="/sumbit-project">Submit a Project</a>
-            <a href="/news">News</a>
             <a href="/contact">Get in touch with us</a>
           </nav>
           <div>
