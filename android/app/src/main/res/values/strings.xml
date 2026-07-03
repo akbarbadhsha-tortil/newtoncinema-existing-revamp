@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Golden Rooster</string>
+    <string name="title_activity_main">Golden Rooster</string>
+    <string name="package_name">com.goldenrooster.shop</string>
+    <string name="custom_url_scheme">com.goldenrooster.shop</string>
+</resources>
