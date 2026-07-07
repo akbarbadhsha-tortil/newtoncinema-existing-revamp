@@ -124,7 +124,7 @@ const news = [
   },
   {
     source: "Times of India",
-    text: "'Leftover' at Cannes - Salim Ahamed on telling a story that stays emotionally honest",
+    text: "Salim Ahamed on 'Leftover' and telling a story that stays emotionally honest",
     href: "https://timesofindia.indiatimes.com/entertainment/malayalam/movies/news/leftover-at-cannes-salim-ahamed-says-i-wanted-to-tell-this-story-in-a-way-that-remains-emotionally-honest/articleshow/131106399.cms",
   },
   {
