@@ -151,7 +151,7 @@ export default function App() {
   const scrollbarTrackRef = useRef(null);
   const scrollbarThumbRef = useRef(null);
   const projectsCursorRef = useRef(null);
-  const projectsScrollDirRef = useRef(null);
+  const projectsScrollRef = useRef({ dir: null, speed: 0 });
   const projectsScrollRafRef = useRef(null);
   const prefersReducedMotionRef = useRef(false);
   const current = films[streamIndex % films.length];
@@ -216,8 +216,13 @@ export default function App() {
     if (projectsScrollRafRef.current) return;
     function step() {
       const row = projectsRef.current;
-      if (row && projectsScrollDirRef.current) {
-        row.scrollLeft += projectsScrollDirRef.current === "right" ? 1.8 : -1.8;
+      const { dir, speed } = projectsScrollRef.current;
+      if (row && dir) {
+        // Force instant here — the row's CSS scroll-behavior:smooth would
+        // otherwise treat each frame's tiny increment as its own eased
+        // scroll request, producing jerky motion instead of a glide.
+        const delta = dir === "right" ? speed : -speed;
+        row.scrollTo({ left: row.scrollLeft + delta, behavior: "instant" });
       }
       projectsScrollRafRef.current = requestAnimationFrame(step);
     }
@@ -229,7 +234,7 @@ export default function App() {
       cancelAnimationFrame(projectsScrollRafRef.current);
       projectsScrollRafRef.current = null;
     }
-    projectsScrollDirRef.current = null;
+    projectsScrollRef.current = { dir: null, speed: 0 };
     const cursor = projectsCursorRef.current;
     if (cursor) cursor.classList.remove("is-visible");
   }
@@ -243,8 +248,19 @@ export default function App() {
     const cursor = projectsCursorRef.current;
     if (!row || !cursor) return;
     const rect = row.getBoundingClientRect();
-    const isRight = event.clientX - rect.left > rect.width / 2;
-    projectsScrollDirRef.current = isRight ? "right" : "left";
+    const ratio = (event.clientX - rect.left) / rect.width;
+    const isRight = ratio > 0.5;
+    // Speed ramps up the closer the cursor is to the row's edge. An eased
+    // (not linear) curve keeps it from jumping right as you cross the
+    // midpoint, and a higher floor keeps near-center hovering perceptible
+    // rather than feeling like nothing's happening.
+    const distanceFromCenter = Math.min(Math.abs(ratio - 0.5) * 2, 1);
+    const minSpeed = 1.2;
+    const maxSpeed = 7;
+    projectsScrollRef.current = {
+      dir: isRight ? "right" : "left",
+      speed: minSpeed + distanceFromCenter ** 1.6 * (maxSpeed - minSpeed),
+    };
     cursor.style.transform = `translate(${event.clientX}px, ${event.clientY}px) translate(-50%, -50%)`;
     cursor.classList.add("is-visible");
     cursor.classList.toggle("is-left", !isRight);
