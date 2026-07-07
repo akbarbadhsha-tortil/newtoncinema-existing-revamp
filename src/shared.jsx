@@ -2,7 +2,7 @@ import { useState } from "react";
 
 export const menu = [
   { num: "01", label: "Projects", href: "/projects" },
-  { num: "02", label: "Submit a Project", href: "/sumbit-project" },
+  { num: "02", label: "Submit your Project", href: "/sumbit-project" },
   { num: "03", label: "News", disabled: true },
   { num: "04", label: "Get in touch with us", href: "/contact" },
 ];
@@ -216,12 +216,19 @@ export function SiteFooter() {
       <div className="nc-footer-glow" />
       <div className="nc-footer-inner">
         <div className="nc-footer-hero">
-          <h2>
-            Uplifting stories.
-            <br />
-            <span>Empowering filmmakers.</span>
-          </h2>
-          <a href="/sumbit-project">Submit a Project <span aria-hidden="true">→</span></a>
+          <div className="nc-footer-hero-copy">
+            <h2>
+              Uplifting stories.
+              <br />
+              <span>Empowering filmmakers.</span>
+            </h2>
+            <ul className="nc-footer-conditions">
+              <li>Completed or festival-ready</li>
+              <li>Fiction or documentary</li>
+              <li>Rooted in social impact</li>
+            </ul>
+          </div>
+          <a href="/sumbit-project">Submit your Project <span aria-hidden="true">→</span></a>
         </div>
 
         <div className="nc-footer-grid">
@@ -232,7 +239,7 @@ export function SiteFooter() {
           <nav aria-label="Footer">
             <p>Explore</p>
             <a href="/projects">Projects</a>
-            <a href="/sumbit-project">Submit a Project</a>
+            <a href="/sumbit-project">Submit your Project</a>
             <span className="nc-footer-disabled" aria-disabled="true">News</span>
             <a href="/contact">Get in touch with us</a>
           </nav>

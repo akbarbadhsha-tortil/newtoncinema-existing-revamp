@@ -253,27 +253,6 @@ button {
   font-weight: 600;
 }
 
-.nc-projects-head div,
-.nc-stream-controls > div:last-child {
-  display: flex;
-  gap: 10px;
-}
-
-.nc-projects-head button {
-  width: 44px;
-  height: 40px;
-  border: 0;
-  border-radius: 8px;
-  background: #1c1c1c;
-  color: var(--text);
-  cursor: pointer;
-  font-size: 18px;
-}
-
-.nc-projects-head button:hover {
-  background: #2a2a2a;
-}
-
 .nc-projrow {
   display: flex;
   gap: 18px;
@@ -284,10 +263,101 @@ button {
   padding-bottom: 6px;
   scroll-behavior: smooth;
   scrollbar-width: none;
+  /* fades the trailing card so the row itself signals there is more to see */
+  mask-image: linear-gradient(to right, black 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black 92%, transparent 100%);
 }
 
 .nc-projrow::-webkit-scrollbar {
   display: none;
+}
+
+.nc-card img {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+.nc-projrow-cursor {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(245, 241, 232, 0.25);
+  background: rgba(20, 20, 20, 0.75);
+  color: var(--cream);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+  will-change: transform;
+}
+
+.nc-projrow-cursor.is-visible {
+  opacity: 1;
+}
+
+.nc-projrow-cursor.is-left svg {
+  transform: scaleX(-1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .nc-projrow,
+  .nc-projrow .nc-card {
+    cursor: none;
+  }
+
+  .nc-projrow-cursor {
+    display: flex;
+  }
+}
+
+.nc-projects-scrollbar {
+  position: relative;
+  width: 200px;
+  height: 6px;
+  margin: 20px auto 0;
+  border-radius: 999px;
+  background: rgba(245, 241, 232, 0.12);
+}
+
+/* The draggable hit area is taller than the visible track (touch-target best
+   practice: extend the interactive area beyond a thin visual element instead
+   of just enlarging the visual itself) — the bar you see is the ::after. */
+.nc-projects-scrollbar-thumb {
+  position: absolute;
+  top: -9px;
+  left: 0;
+  height: 24px;
+  cursor: grab;
+}
+
+.nc-projects-scrollbar-thumb::after {
+  content: "";
+  position: absolute;
+  top: 9px;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(245, 241, 232, 0.55);
+  transition: background 0.2s ease;
+}
+
+.nc-projects-scrollbar-thumb:hover::after {
+  background: rgba(245, 241, 232, 0.75);
+}
+
+.nc-projects-scrollbar-thumb:active::after {
+  background: var(--cream);
+}
+
+.nc-projects-scrollbar-thumb:active {
+  cursor: grabbing;
 }
 
 .nc-card {
@@ -330,6 +400,12 @@ button {
   transform: scale(1.03);
 }
 
+.nc-card:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 4px;
+  border-radius: 10px;
+}
+
 .nc-thumb > span {
   position: relative;
   z-index: 2;
@@ -365,14 +441,30 @@ button {
 .nc-streaming {
   position: relative;
   overflow: hidden;
-  border-top: 1px solid rgba(145, 130, 201, 0.28);
-  background: linear-gradient(90deg, #211944, #2a2052);
+  border-top: 1px solid rgba(245, 241, 232, 0.08);
+  background: var(--bg);
+}
+
+.nc-stream-glow {
+  position: absolute;
+  top: -18%;
+  left: 6%;
+  width: min(620px, 68vw);
+  height: 360px;
+  background: radial-gradient(ellipse at center, rgba(145, 130, 201, 0.16), rgba(145, 130, 201, 0) 70%);
+  pointer-events: none;
 }
 
 .nc-stream-inner {
+  position: relative;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 34px clamp(20px, 4vw, 56px) 28px;
+  padding: 44px clamp(20px, 4vw, 56px) 40px;
+}
+
+.nc-streaming .nc-minihead {
+  justify-content: flex-start;
+  margin-bottom: 26px;
 }
 
 .nc-stream-top {
@@ -415,14 +507,6 @@ button {
 
 .nc-current:hover::after {
   transform: scaleX(1);
-}
-
-.nc-current > span {
-  color: var(--purple);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
 }
 
 .nc-current strong {
@@ -527,21 +611,6 @@ button {
 .nc-stream-dots button.active {
   width: 24px;
   background: var(--cream);
-}
-
-.nc-stream-controls button:not(.nc-stream-dots button) {
-  width: 38px;
-  height: 34px;
-  border: 1px solid rgba(145, 130, 201, 0.35);
-  border-radius: 8px;
-  background: transparent;
-  color: #c9c0ea;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.nc-stream-controls button:not(.nc-stream-dots button):hover {
-  background: rgba(145, 130, 201, 0.16);
 }
 
 .nc-progress {
@@ -807,6 +876,38 @@ button {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(246, 240, 229, 0.55), transparent);
   pointer-events: none;
+}
+
+.nc-footer-hero-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.nc-footer-conditions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nc-footer-conditions li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(245, 241, 232, 0.6);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.nc-footer-conditions li::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--gold);
 }
 
 .nc-footer-hero h2 {

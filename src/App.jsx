@@ -148,6 +148,12 @@ export default function App() {
   const [streamIndex, setStreamIndex] = useState(0);
   const videoRef = useRef(null);
   const projectsRef = useRef(null);
+  const scrollbarTrackRef = useRef(null);
+  const scrollbarThumbRef = useRef(null);
+  const projectsCursorRef = useRef(null);
+  const projectsScrollDirRef = useRef(null);
+  const projectsScrollRafRef = useRef(null);
+  const prefersReducedMotionRef = useRef(false);
   const current = films[streamIndex % films.length];
   const newsLoop = useMemo(() => [...news, ...news], []);
 
@@ -158,8 +164,113 @@ export default function App() {
     return () => window.clearInterval(timer);
   }, []);
 
-  function scrollProjects(amount) {
-    projectsRef.current?.scrollBy({ left: amount, behavior: "smooth" });
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    prefersReducedMotionRef.current = query.matches;
+    function handleChange(event) {
+      prefersReducedMotionRef.current = event.matches;
+    }
+    query.addEventListener("change", handleChange);
+    return () => query.removeEventListener("change", handleChange);
+  }, []);
+
+  useEffect(() => {
+    const row = projectsRef.current;
+    if (!row) return;
+
+    function updateThumb() {
+      const thumb = scrollbarThumbRef.current;
+      if (!thumb) return;
+      const { scrollWidth, clientWidth, scrollLeft } = row;
+      if (scrollWidth <= clientWidth + 1) {
+        thumb.style.width = "0px";
+        return;
+      }
+      const widthPct = Math.max((clientWidth / scrollWidth) * 100, 8);
+      const leftPct = (scrollLeft / (scrollWidth - clientWidth)) * (100 - widthPct);
+      thumb.style.width = `${widthPct}%`;
+      thumb.style.left = `${leftPct}%`;
+    }
+
+    updateThumb();
+    row.addEventListener("scroll", updateThumb, { passive: true });
+    const resizeObserver = new ResizeObserver(updateThumb);
+    resizeObserver.observe(row);
+    window.addEventListener("resize", updateThumb);
+    return () => {
+      row.removeEventListener("scroll", updateThumb);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateThumb);
+    };
+  }, []);
+
+  function handleProjectsWheel(event) {
+    // Let native horizontal gestures (trackpad/touch) pass through untouched;
+    // only redirect a plain vertical wheel so a mouse can scroll the row too.
+    if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+    event.preventDefault();
+    projectsRef.current?.scrollBy({ left: event.deltaY });
+  }
+
+  function startProjectsAutoScroll() {
+    if (projectsScrollRafRef.current) return;
+    function step() {
+      const row = projectsRef.current;
+      if (row && projectsScrollDirRef.current) {
+        row.scrollLeft += projectsScrollDirRef.current === "right" ? 1.8 : -1.8;
+      }
+      projectsScrollRafRef.current = requestAnimationFrame(step);
+    }
+    projectsScrollRafRef.current = requestAnimationFrame(step);
+  }
+
+  function stopProjectsAutoScroll() {
+    if (projectsScrollRafRef.current) {
+      cancelAnimationFrame(projectsScrollRafRef.current);
+      projectsScrollRafRef.current = null;
+    }
+    projectsScrollDirRef.current = null;
+    const cursor = projectsCursorRef.current;
+    if (cursor) cursor.classList.remove("is-visible");
+  }
+
+  function handleProjectsPointerActivity(event) {
+    // Auto-scrolling on mere hover is exactly the kind of motion
+    // prefers-reduced-motion exists to suppress — wheel/touch/scrollbar
+    // remain available since those are user-initiated, not automatic.
+    if (prefersReducedMotionRef.current) return;
+    const row = projectsRef.current;
+    const cursor = projectsCursorRef.current;
+    if (!row || !cursor) return;
+    const rect = row.getBoundingClientRect();
+    const isRight = event.clientX - rect.left > rect.width / 2;
+    projectsScrollDirRef.current = isRight ? "right" : "left";
+    cursor.style.transform = `translate(${event.clientX}px, ${event.clientY}px) translate(-50%, -50%)`;
+    cursor.classList.add("is-visible");
+    cursor.classList.toggle("is-left", !isRight);
+    startProjectsAutoScroll();
+  }
+
+  function handleThumbPointerDown(event) {
+    const row = projectsRef.current;
+    const track = scrollbarTrackRef.current;
+    if (!row || !track) return;
+    event.preventDefault();
+    const startX = event.clientX;
+    const startScrollLeft = row.scrollLeft;
+    const ratio = row.scrollWidth / track.clientWidth;
+
+    function onMove(moveEvent) {
+      // Force instant scrolling here — the row's CSS scroll-behavior:smooth
+      // would otherwise ease/lag behind the pointer during a drag.
+      row.scrollTo({ left: startScrollLeft + (moveEvent.clientX - startX) * ratio, behavior: "instant" });
+    }
+    function onUp() {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    }
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
   }
 
   function toggleMute() {
@@ -203,33 +314,78 @@ export default function App() {
       <section className="nc-projects" id="projects" aria-label="Projects">
         <div className="nc-projects-head">
           <h2>Projects</h2>
-          <div>
-            <button aria-label="Previous projects" onClick={() => scrollProjects(-260)}>
-              ←
-            </button>
-            <button aria-label="Next projects" onClick={() => scrollProjects(260)}>
-              →
-            </button>
-          </div>
         </div>
-        <div className="nc-projrow" ref={projectsRef}>
-          {projects.map((film) => (
-            <a href={film.href} className="nc-card" aria-label={film.aria} key={film.name}>
+        <div
+          className="nc-projrow"
+          ref={projectsRef}
+          onWheel={handleProjectsWheel}
+          onMouseEnter={handleProjectsPointerActivity}
+          onMouseMove={handleProjectsPointerActivity}
+          onMouseLeave={stopProjectsAutoScroll}
+        >
+          {projects.map((film, index) => (
+            <a
+              href={film.href}
+              className="nc-card"
+              aria-label={film.aria}
+              // Project detail pages don't exist yet — keep the link's a11y/hover
+              // affordance but no-op the navigation until those pages are built.
+              onClick={(event) => event.preventDefault()}
+              key={film.name}
+            >
               <div className="nc-thumb">
-                <img src={film.image} alt="" />
+                <img src={film.image} alt="" loading={index === 0 ? "eager" : "lazy"} />
                 <span>{film.name}</span>
                 <i aria-hidden="true">↗</i>
               </div>
             </a>
           ))}
         </div>
+        <div className="nc-projrow-cursor" ref={projectsCursorRef} aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <polyline
+              points="9,6 15,12 9,18"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+        <div className="nc-projects-scrollbar" ref={scrollbarTrackRef} aria-hidden="true">
+          <div
+            className="nc-projects-scrollbar-thumb"
+            ref={scrollbarThumbRef}
+            onPointerDown={handleThumbPointerDown}
+          />
+        </div>
+      </section>
+
+      <section className="nc-news" id="news" aria-label="In the press">
+        <span className="nc-news-label">In the Press</span>
+        <div className="nc-news-window">
+          <div className="nc-track">
+            {newsLoop.map((item, index) => (
+              <a href={item.href} target="_blank" rel="noopener" key={`${item.source}-${index}`}>
+                <span>{item.source}</span>
+                <b>{item.text}</b>
+                <i aria-hidden="true">●</i>
+              </a>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section className="nc-streaming" aria-label="Now streaming">
+        <div className="nc-stream-glow" />
         <div className="nc-stream-inner">
+          <div className="nc-minihead">
+            <span />
+            <b>Now Streaming</b>
+            <span />
+          </div>
           <div className="nc-stream-top" key={current.title}>
             <a href={current.href} target="_blank" rel="noopener" className="nc-current">
-              <span>Now Streaming</span>
               <strong>
                 {current.title} <em>↗</em>
               </strong>
@@ -264,39 +420,10 @@ export default function App() {
                 />
               ))}
             </div>
-            <div>
-              <button
-                aria-label="Previous film"
-                onClick={() => setStreamIndex((index) => (index - 1 + films.length) % films.length)}
-              >
-                ←
-              </button>
-              <button
-                aria-label="Next film"
-                onClick={() => setStreamIndex((index) => (index + 1) % films.length)}
-              >
-                →
-              </button>
-            </div>
           </div>
         </div>
         <div className="nc-progress">
           <span />
-        </div>
-      </section>
-
-      <section className="nc-news" id="news" aria-label="In the press">
-        <span className="nc-news-label">In the Press</span>
-        <div className="nc-news-window">
-          <div className="nc-track">
-            {newsLoop.map((item, index) => (
-              <a href={item.href} target="_blank" rel="noopener" key={`${item.source}-${index}`}>
-                <span>{item.source}</span>
-                <b>{item.text}</b>
-                <i aria-hidden="true">●</i>
-              </a>
-            ))}
-          </div>
         </div>
       </section>
 

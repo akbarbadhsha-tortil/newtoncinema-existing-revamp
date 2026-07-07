@@ -138,8 +138,8 @@ export default function ProjectsPage() {
         </div>
         <h1>Projects</h1>
         <p>
-          Six films. Stories that challenge social norms and inspire positive change —
-          from Cannes to Rotterdam.
+          A growing collection of stories that challenge social norms and inspire
+          positive change — from festival premieres to global streaming.
         </p>
         <div className="nc-scroll ncp-scroll">
           <span>SCROLL</span>
@@ -157,14 +157,15 @@ export default function ProjectsPage() {
             id={`ncp-project-${index}`}
             data-index={index}
             aria-label={`${film.name}, directed by ${film.director}`}
+            // Project detail pages don't exist yet — keep the link's a11y/hover
+            // affordance but no-op the navigation until those pages are built.
+            onClick={(event) => event.preventDefault()}
             key={film.name}
           >
             <div className="ncp-media">
               <img src={film.image} alt="" loading={index === 0 ? "eager" : "lazy"} />
             </div>
-            <span className="ncp-num">
-              {String(index + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}
-            </span>
+            <span className="ncp-num">{String(index + 1).padStart(2, "0")}</span>
             <div className="ncp-meta">
               <div>
                 <em>{film.director}</em>
