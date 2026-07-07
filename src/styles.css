@@ -4,7 +4,6 @@
   --bg: #0c0c0c;
   --text: #ededed;
   --cream: #f5f1e8;
-  --purple: #9182c9;
   --gold: #c9a15b;
   --line: #1c1c1c;
 }
@@ -30,7 +29,7 @@ body {
 }
 
 ::selection {
-  background: var(--purple);
+  background: var(--gold);
   color: var(--bg);
 }
 
@@ -451,7 +450,7 @@ button {
   left: 6%;
   width: min(620px, 68vw);
   height: 360px;
-  background: radial-gradient(ellipse at center, rgba(145, 130, 201, 0.16), rgba(145, 130, 201, 0) 70%);
+  background: radial-gradient(ellipse at center, rgba(201, 161, 91, 0.16), rgba(201, 161, 91, 0) 70%);
   pointer-events: none;
 }
 
@@ -619,13 +618,13 @@ button {
   bottom: 0;
   width: 100%;
   height: 2px;
-  background: rgba(145, 130, 201, 0.14);
+  background: rgba(201, 161, 91, 0.14);
 }
 
 .nc-progress span {
   display: block;
   height: 100%;
-  background: var(--purple);
+  background: var(--gold);
   transform-origin: left;
   animation: ncprog 5s linear infinite;
 }
@@ -636,7 +635,7 @@ button {
   align-items: stretch;
   overflow: hidden;
   border-top: 1px solid rgba(201, 161, 91, 0.32);
-  border-bottom: 1px solid rgba(145, 130, 201, 0.24);
+  border-bottom: 1px solid rgba(201, 161, 91, 0.24);
   background:
     radial-gradient(circle at 12% 50%, rgba(201, 161, 91, 0.16), transparent 34%),
     linear-gradient(90deg, #19110b 0%, #17102e 48%, #0c0c0c 100%);
@@ -723,7 +722,7 @@ button {
   left: 50%;
   width: min(900px, 90vw);
   height: 520px;
-  background: radial-gradient(ellipse at center, rgba(145, 130, 201, 0.16), rgba(145, 130, 201, 0) 68%);
+  background: radial-gradient(ellipse at center, rgba(201, 161, 91, 0.16), rgba(201, 161, 91, 0) 68%);
   pointer-events: none;
   transform: translateX(-50%);
 }
@@ -732,7 +731,7 @@ button {
   position: absolute;
   top: clamp(28px, 5vw, 64px);
   left: 50%;
-  color: rgba(145, 130, 201, 0.09);
+  color: rgba(201, 161, 91, 0.09);
   font-size: clamp(120px, 20vw, 260px);
   font-weight: 800;
   line-height: 1;
@@ -757,11 +756,11 @@ button {
 .nc-minihead span {
   width: 34px;
   height: 1px;
-  background: rgba(145, 130, 201, 0.5);
+  background: rgba(201, 161, 91, 0.5);
 }
 
 .nc-minihead b {
-  color: var(--purple);
+  color: var(--gold);
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.28em;
@@ -788,7 +787,7 @@ button {
   align-items: center;
   gap: 10px;
   margin: 48px auto 0;
-  border: 1px solid rgba(145, 130, 201, 0.5);
+  border: 1px solid rgba(201, 161, 91, 0.5);
   border-radius: 100px;
   padding: 13px 30px;
   color: var(--text);
@@ -797,8 +796,8 @@ button {
 }
 
 .nc-mission a:hover {
-  border-color: var(--purple);
-  background: var(--purple);
+  border-color: var(--gold);
+  background: var(--gold);
   color: var(--bg);
 }
 
@@ -820,7 +819,7 @@ button {
   left: 50%;
   width: min(1100px, 96vw);
   height: 440px;
-  background: radial-gradient(ellipse at center, rgba(145, 130, 201, 0.13), rgba(145, 130, 201, 0) 70%);
+  background: radial-gradient(ellipse at center, rgba(201, 161, 91, 0.13), rgba(201, 161, 91, 0) 70%);
   pointer-events: none;
   transform: translateX(-50%);
 }
@@ -845,7 +844,7 @@ button {
   border-radius: 22px;
   background:
     linear-gradient(115deg, rgba(246, 240, 229, 0.08), rgba(246, 240, 229, 0) 42%),
-    linear-gradient(140deg, rgba(16, 16, 18, 0.94), rgba(24, 22, 31, 0.96) 52%, rgba(145, 130, 201, 0.22));
+    linear-gradient(140deg, rgba(16, 16, 18, 0.94), rgba(24, 22, 31, 0.96) 52%, rgba(201, 161, 91, 0.22));
   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.34);
 }
 
@@ -922,8 +921,8 @@ button {
 }
 
 .nc-footer-hero h2 span {
-  color: var(--purple);
-  text-shadow: 0 0 36px rgba(145, 130, 201, 0.34);
+  color: var(--gold);
+  text-shadow: 0 0 36px rgba(201, 161, 91, 0.34);
 }
 
 .nc-footer-hero > a {
@@ -958,9 +957,9 @@ button {
 }
 
 .nc-footer-hero > a:hover {
-  background: var(--purple);
+  background: var(--gold);
   color: var(--cream);
-  box-shadow: 0 22px 58px rgba(145, 130, 201, 0.26);
+  box-shadow: 0 22px 58px rgba(201, 161, 91, 0.26);
   transform: translateY(-3px);
 }
 
@@ -1456,7 +1455,7 @@ button {
   padding: 140px clamp(20px, 4vw, 56px) 90px;
   text-align: center;
   background:
-    radial-gradient(60% 90% at 50% 0%, rgba(145, 130, 201, 0.16), transparent 70%),
+    radial-gradient(60% 90% at 50% 0%, rgba(201, 161, 91, 0.16), transparent 70%),
     var(--bg);
 }
 
@@ -1791,7 +1790,7 @@ button {
 }
 
 .ncn-meta b {
-  color: var(--purple);
+  color: var(--gold);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
