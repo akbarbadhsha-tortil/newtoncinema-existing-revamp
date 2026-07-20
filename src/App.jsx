@@ -156,13 +156,13 @@ export default function App() {
   const prefersReducedMotionRef = useRef(false);
   const current = films[streamIndex % films.length];
   const newsLoop = useMemo(() => [...news, ...news], []);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setStreamIndex((index) => (index + 1) % films.length);
-    }, 5000);
-    return () => window.clearInterval(timer);
-  }, []);
+  // Three copies (buffer / real / buffer) so scrolling can silently wrap
+  // back into the middle copy once you drift into either duplicate side —
+  // the copies are pixel-identical so the wrap is imperceptible.
+  const loopedProjects = useMemo(
+    () => [0, 1, 2].flatMap((copy) => projects.map((film, i) => ({ film, copy, i }))),
+    []
+  );
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -178,27 +178,49 @@ export default function App() {
     const row = projectsRef.current;
     if (!row) return;
 
+    // One set's width — the row holds 3 copies back to back, so this is
+    // exactly a third of the full scrollWidth.
+    const setWidth = () => row.scrollWidth / 3;
+
     function updateThumb() {
       const thumb = scrollbarThumbRef.current;
       if (!thumb) return;
-      const { scrollWidth, clientWidth, scrollLeft } = row;
-      if (scrollWidth <= clientWidth + 1) {
+      const w = setWidth();
+      const { clientWidth } = row;
+      if (w <= clientWidth + 1) {
         thumb.style.width = "0px";
         return;
       }
-      const widthPct = Math.max((clientWidth / scrollWidth) * 100, 8);
-      const leftPct = (scrollLeft / (scrollWidth - clientWidth)) * (100 - widthPct);
+      const loopedLeft = row.scrollLeft % w;
+      const widthPct = Math.max((clientWidth / w) * 100, 8);
+      const leftPct = (loopedLeft / (w - clientWidth)) * (100 - widthPct);
       thumb.style.width = `${widthPct}%`;
       thumb.style.left = `${leftPct}%`;
     }
 
+    function handleScroll() {
+      const w = setWidth();
+      // Silently wrap back into the middle copy once the user has drifted
+      // into either buffer copy. Copies are pixel-identical, so this jump
+      // is imperceptible — it just looks like uninterrupted scrolling.
+      if (row.scrollLeft < w) {
+        row.scrollTo({ left: row.scrollLeft + w, behavior: "instant" });
+      } else if (row.scrollLeft >= w * 2) {
+        row.scrollTo({ left: row.scrollLeft - w, behavior: "instant" });
+      }
+      updateThumb();
+    }
+
+    // Start centered in the middle copy so there's a full set's worth of
+    // buffer to scroll into on either side right from the start.
+    row.scrollTo({ left: setWidth(), behavior: "instant" });
     updateThumb();
-    row.addEventListener("scroll", updateThumb, { passive: true });
+    row.addEventListener("scroll", handleScroll, { passive: true });
     const resizeObserver = new ResizeObserver(updateThumb);
     resizeObserver.observe(row);
     window.addEventListener("resize", updateThumb);
     return () => {
-      row.removeEventListener("scroll", updateThumb);
+      row.removeEventListener("scroll", handleScroll);
       resizeObserver.disconnect();
       window.removeEventListener("resize", updateThumb);
     };
@@ -295,37 +317,54 @@ export default function App() {
 
   return (
     <main className="nc-page">
-      <SiteHeader />
-
-      <section className="nc-hero" aria-label="Featured reel">
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="nc-hero-video"
-          poster="https://cdn.prod.website-files.com/6656dece0ea89264ba78749f/690a3d9e77758866ffdfd301_StateAward_web_banner.jpg"
-        >
-          <source src="https://r2.vidzflow.com/v/kSuK3cZ0nk_576p_1738925138.mp4" type="video/mp4" />
-          <source src="https://r2.vidzflow.com/v/CNAClxjocb_576p_1738925586.mp4" type="video/mp4" />
-        </video>
-        <div className="nc-hero-top-shade" />
-        <div className="nc-hero-fade" />
-        <button className="nc-mute" aria-label="Toggle sound" onClick={toggleMute}>
-          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-            <polygon points="3,9 3,15 8,15 13,20 13,4 8,9" fill="currentColor" />
-            <line x1="16" y1="9" x2="22" y2="15" stroke="currentColor" strokeWidth="2" />
-            <line x1="22" y1="9" x2="16" y2="15" stroke="currentColor" strokeWidth="2" />
-          </svg>
-        </button>
-        <div className="nc-scroll">
-          <span>SCROLL</span>
-          <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
-            <polyline points="6,9 12,15 18,9" fill="none" stroke="currentColor" strokeWidth="1.6" />
-          </svg>
+      <section className="nc-news" id="news" aria-label="In the press">
+        <span className="nc-news-label">In the Press</span>
+        <div className="nc-news-window">
+          <div className="nc-track">
+            {newsLoop.map((item, index) => (
+              <a href={item.href} target="_blank" rel="noopener" key={`${item.source}-${index}`}>
+                <span>{item.source}</span>
+                <b>{item.text}</b>
+                <i aria-hidden="true">●</i>
+              </a>
+            ))}
+          </div>
         </div>
       </section>
+
+      <div className="nc-hero-shell">
+        <SiteHeader />
+
+        <section className="nc-hero" aria-label="Featured reel">
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="nc-hero-video"
+            poster="https://cdn.prod.website-files.com/6656dece0ea89264ba78749f/690a3d9e77758866ffdfd301_StateAward_web_banner.jpg"
+          >
+            <source src="https://r2.vidzflow.com/v/kSuK3cZ0nk_576p_1738925138.mp4" type="video/mp4" />
+            <source src="https://r2.vidzflow.com/v/CNAClxjocb_576p_1738925586.mp4" type="video/mp4" />
+          </video>
+          <div className="nc-hero-top-shade" />
+          <div className="nc-hero-fade" />
+          <button className="nc-mute" aria-label="Toggle sound" onClick={toggleMute}>
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+              <polygon points="3,9 3,15 8,15 13,20 13,4 8,9" fill="currentColor" />
+              <line x1="16" y1="9" x2="22" y2="15" stroke="currentColor" strokeWidth="2" />
+              <line x1="22" y1="9" x2="16" y2="15" stroke="currentColor" strokeWidth="2" />
+            </svg>
+          </button>
+          <div className="nc-scroll">
+            <span>SCROLL</span>
+            <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
+              <polyline points="6,9 12,15 18,9" fill="none" stroke="currentColor" strokeWidth="1.6" />
+            </svg>
+          </div>
+        </section>
+      </div>
 
       <section className="nc-projects" id="projects" aria-label="Projects">
         <div className="nc-projects-head">
@@ -339,23 +378,31 @@ export default function App() {
           onMouseMove={handleProjectsPointerActivity}
           onMouseLeave={stopProjectsAutoScroll}
         >
-          {projects.map((film, index) => (
-            <a
-              href={film.href}
-              className="nc-card"
-              aria-label={film.aria}
-              // Project detail pages don't exist yet — keep the link's a11y/hover
-              // affordance but no-op the navigation until those pages are built.
-              onClick={(event) => event.preventDefault()}
-              key={film.name}
-            >
-              <div className="nc-thumb">
-                <img src={film.image} alt="" loading={index === 0 ? "eager" : "lazy"} />
-                <span>{film.name}</span>
-                <i aria-hidden="true">↗</i>
-              </div>
-            </a>
-          ))}
+          {loopedProjects.map(({ film, copy, i }) => {
+            // Only the middle copy is "real" — the other two exist purely as
+            // scroll buffer and stay out of the tab order / AT tree so
+            // keyboard and screen-reader users see each project once.
+            const isBuffer = copy !== 1;
+            return (
+              <a
+                href={film.href}
+                className="nc-card"
+                aria-label={film.aria}
+                aria-hidden={isBuffer ? true : undefined}
+                tabIndex={isBuffer ? -1 : undefined}
+                // Project detail pages don't exist yet — keep the link's a11y/hover
+                // affordance but no-op the navigation until those pages are built.
+                onClick={(event) => event.preventDefault()}
+                key={`${film.name}-${copy}`}
+              >
+                <div className="nc-thumb">
+                  <img src={film.image} alt="" loading={copy === 1 && i === 0 ? "eager" : "lazy"} />
+                  <span>{film.name}</span>
+                  <i aria-hidden="true">↗</i>
+                </div>
+              </a>
+            );
+          })}
         </div>
         <div className="nc-projrow-cursor" ref={projectsCursorRef} aria-hidden="true">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -377,27 +424,12 @@ export default function App() {
         </div>
       </section>
 
-      <section className="nc-news" id="news" aria-label="In the press">
-        <span className="nc-news-label">In the Press</span>
-        <div className="nc-news-window">
-          <div className="nc-track">
-            {newsLoop.map((item, index) => (
-              <a href={item.href} target="_blank" rel="noopener" key={`${item.source}-${index}`}>
-                <span>{item.source}</span>
-                <b>{item.text}</b>
-                <i aria-hidden="true">●</i>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section className="nc-streaming" aria-label="Now streaming">
         <div className="nc-stream-glow" />
         <div className="nc-stream-inner">
           <div className="nc-minihead">
             <span />
-            <b>Now Streaming</b>
+            <b>Click to Watch Movie</b>
             <span />
           </div>
           <div className="nc-stream-top" key={current.title}>
@@ -406,22 +438,19 @@ export default function App() {
                 {current.title} <em>↗</em>
               </strong>
             </a>
-            <div className="nc-platforms-wrap">
-              <span>Streaming now in</span>
-              <div className="nc-platforms">
-                {current.platforms.map((platform) => (
-                  <a
-                    href={platform.href}
-                    target="_blank"
-                    rel="noopener"
-                    aria-label={`Watch on ${platform.name}`}
-                    title={platform.name}
-                    key={`${current.title}-${platform.name}`}
-                  >
-                    <img src={platform.logo} alt={platform.name} />
-                  </a>
-                ))}
-              </div>
+            <div className="nc-platforms">
+              {current.platforms.map((platform) => (
+                <a
+                  href={platform.href}
+                  target="_blank"
+                  rel="noopener"
+                  aria-label={`Watch on ${platform.name}`}
+                  title={platform.name}
+                  key={`${current.title}-${platform.name}`}
+                >
+                  <img src={platform.logo} alt={platform.name} />
+                </a>
+              ))}
             </div>
           </div>
           <div className="nc-stream-controls">
@@ -437,9 +466,6 @@ export default function App() {
               ))}
             </div>
           </div>
-        </div>
-        <div className="nc-progress">
-          <span />
         </div>
       </section>
 

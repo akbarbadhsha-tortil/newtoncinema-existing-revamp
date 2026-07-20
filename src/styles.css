@@ -49,6 +49,10 @@ button {
   color: var(--text);
 }
 
+.nc-hero-shell {
+  position: relative;
+}
+
 .nc-header {
   position: absolute;
   z-index: 50;
@@ -262,9 +266,9 @@ button {
   padding-bottom: 6px;
   scroll-behavior: smooth;
   scrollbar-width: none;
-  /* fades the trailing card so the row itself signals there is more to see */
-  mask-image: linear-gradient(to right, black 92%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, black 92%, transparent 100%);
+  /* fades both edges — the row loops infinitely in either direction now */
+  mask-image: linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%);
 }
 
 .nc-projrow::-webkit-scrollbar {
@@ -462,23 +466,20 @@ button {
 }
 
 .nc-streaming .nc-minihead {
-  justify-content: flex-start;
   margin-bottom: 26px;
 }
 
 .nc-stream-top {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 32px;
-  flex-wrap: wrap;
+  gap: 20px;
   animation: ncstreamin 420ms ease both;
 }
 
 .nc-current {
   position: relative;
   display: flex;
-  min-width: 200px;
   flex-direction: column;
   gap: 7px;
   width: fit-content;
@@ -530,23 +531,10 @@ button {
   transform: translate(3px, -3px);
 }
 
-.nc-platforms-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 12px;
-}
-
-.nc-platforms-wrap > span {
-  color: #b7ace0;
-  font-size: 12px;
-  letter-spacing: 0.02em;
-}
-
 .nc-platforms {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 10px;
 }
 
@@ -585,7 +573,7 @@ button {
 .nc-stream-controls {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 20px;
   margin-top: 28px;
 }
@@ -610,23 +598,6 @@ button {
 .nc-stream-dots button.active {
   width: 24px;
   background: var(--cream);
-}
-
-.nc-progress {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 2px;
-  background: rgba(201, 161, 91, 0.14);
-}
-
-.nc-progress span {
-  display: block;
-  height: 100%;
-  background: var(--gold);
-  transform-origin: left;
-  animation: ncprog 5s linear infinite;
 }
 
 .nc-news {
@@ -828,144 +799,6 @@ button {
   position: relative;
   max-width: 1560px;
   margin: 0 auto;
-}
-
-.nc-footer-hero {
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 32px;
-  overflow: hidden;
-  padding: clamp(44px, 6vw, 78px) clamp(24px, 5vw, 64px);
-  border: 1px solid rgba(246, 240, 229, 0.1);
-  border-top-color: transparent;
-  border-radius: 22px;
-  background:
-    linear-gradient(115deg, rgba(246, 240, 229, 0.08), rgba(246, 240, 229, 0) 42%),
-    linear-gradient(140deg, rgba(16, 16, 18, 0.94), rgba(24, 22, 31, 0.96) 52%, rgba(201, 161, 91, 0.22));
-  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.34);
-}
-
-.nc-footer-hero::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, rgba(10, 10, 10, 0.88), rgba(10, 10, 10, 0) 34px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 26%),
-    repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.035) 0,
-      rgba(255, 255, 255, 0.035) 1px,
-      transparent 1px,
-      transparent 82px
-    );
-  opacity: 0.38;
-  pointer-events: none;
-}
-
-.nc-footer-hero::after {
-  content: "";
-  position: absolute;
-  right: clamp(20px, 7vw, 120px);
-  bottom: 0;
-  width: min(420px, 46vw);
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(246, 240, 229, 0.55), transparent);
-  pointer-events: none;
-}
-
-.nc-footer-hero-copy {
-  position: relative;
-  z-index: 1;
-}
-
-.nc-footer-conditions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 20px;
-  margin: 20px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.nc-footer-conditions li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: rgba(245, 241, 232, 0.6);
-  font-size: 13px;
-  font-weight: 400;
-}
-
-.nc-footer-conditions li::before {
-  content: "";
-  width: 5px;
-  height: 5px;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  background: var(--gold);
-}
-
-.nc-footer-hero h2 {
-  position: relative;
-  z-index: 1;
-  margin: 0;
-  color: var(--cream);
-  font-size: clamp(34px, 5.5vw, 78px);
-  font-weight: 700;
-  letter-spacing: 0;
-  line-height: 0.98;
-}
-
-.nc-footer-hero h2 span {
-  color: var(--gold);
-  text-shadow: 0 0 36px rgba(201, 161, 91, 0.34);
-}
-
-.nc-footer-hero > a {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  min-height: 58px;
-  border-radius: 100px;
-  padding: 17px 31px 17px 34px;
-  border: 1px solid rgba(246, 240, 229, 0.42);
-  background: var(--cream);
-  color: var(--bg);
-  font-size: 16px;
-  font-weight: 700;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
-  transition: transform 240ms ease, background 240ms ease, color 240ms ease, box-shadow 240ms ease;
-}
-
-.nc-footer-hero > a span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 999px;
-  background: rgba(6, 6, 7, 0.1);
-  transition: transform 240ms ease, background 240ms ease;
-}
-
-.nc-footer-hero > a:hover {
-  background: var(--gold);
-  color: var(--cream);
-  box-shadow: 0 22px 58px rgba(201, 161, 91, 0.26);
-  transform: translateY(-3px);
-}
-
-.nc-footer-hero > a:hover span {
-  background: rgba(246, 240, 229, 0.16);
-  transform: translateX(4px);
 }
 
 .nc-footer-grid {
@@ -1324,15 +1157,6 @@ button {
   }
 }
 
-@keyframes ncprog {
-  0% {
-    transform: scaleX(0);
-  }
-  100% {
-    transform: scaleX(1);
-  }
-}
-
 @keyframes ncstreamin {
   from {
     opacity: 0;
@@ -1392,20 +1216,9 @@ button {
     min-height: 420px;
   }
 
-  .nc-stream-top,
-  .nc-stream-controls,
-  .nc-footer-hero,
   .nc-legal {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .nc-platforms-wrap {
-    align-items: flex-start;
-  }
-
-  .nc-platforms {
-    justify-content: flex-start;
   }
 
   .nc-news {

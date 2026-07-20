@@ -215,22 +215,6 @@ export function SiteFooter() {
     <footer className="nc-footer">
       <div className="nc-footer-glow" />
       <div className="nc-footer-inner">
-        <div className="nc-footer-hero">
-          <div className="nc-footer-hero-copy">
-            <h2>
-              Uplifting stories.
-              <br />
-              <span>Empowering filmmakers.</span>
-            </h2>
-            <ul className="nc-footer-conditions">
-              <li>Completed or festival-ready</li>
-              <li>Fiction or documentary</li>
-              <li>Rooted in social impact</li>
-            </ul>
-          </div>
-          <a href="/sumbit-project">Submit your Project <span aria-hidden="true">→</span></a>
-        </div>
-
         <div className="nc-footer-grid">
           <div>
             <Logo />
