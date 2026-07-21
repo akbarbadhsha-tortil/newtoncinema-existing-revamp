@@ -154,13 +154,20 @@ export default function App() {
   const projectsScrollRef = useRef({ dir: null, speed: 0 });
   const projectsScrollRafRef = useRef(null);
   const prefersReducedMotionRef = useRef(false);
+  const newsRef = useRef(null);
+  const newsCursorRef = useRef(null);
+  const newsScrollRef = useRef({ dir: null, speed: 0 });
+  const newsScrollRafRef = useRef(null);
   const current = films[streamIndex % films.length];
-  const newsLoop = useMemo(() => [...news, ...news], []);
   // Three copies (buffer / real / buffer) so scrolling can silently wrap
   // back into the middle copy once you drift into either duplicate side —
   // the copies are pixel-identical so the wrap is imperceptible.
   const loopedProjects = useMemo(
     () => [0, 1, 2].flatMap((copy) => projects.map((film, i) => ({ film, copy, i }))),
+    []
+  );
+  const loopedNews = useMemo(
+    () => [0, 1, 2].flatMap((copy) => news.map((item, i) => ({ item, copy, i }))),
     []
   );
 
@@ -202,10 +209,12 @@ export default function App() {
       const w = setWidth();
       // Silently wrap back into the middle copy once the user has drifted
       // into either buffer copy. Copies are pixel-identical, so this jump
-      // is imperceptible — it just looks like uninterrupted scrolling.
-      if (row.scrollLeft < w) {
+      // is imperceptible — it just looks like uninterrupted scrolling. A
+      // 1px tolerance keeps sub-pixel scroll rounding right at the exact
+      // boundary (w rarely divides evenly) from triggering a spurious wrap.
+      if (row.scrollLeft < w - 1) {
         row.scrollTo({ left: row.scrollLeft + w, behavior: "instant" });
-      } else if (row.scrollLeft >= w * 2) {
+      } else if (row.scrollLeft >= w * 2 + 1) {
         row.scrollTo({ left: row.scrollLeft - w, behavior: "instant" });
       }
       updateThumb();
@@ -239,7 +248,7 @@ export default function App() {
     function step() {
       const row = projectsRef.current;
       const { dir, speed } = projectsScrollRef.current;
-      if (row && dir) {
+      if (row && dir && !prefersReducedMotionRef.current) {
         // Force instant here — the row's CSS scroll-behavior:smooth would
         // otherwise treat each frame's tiny increment as its own eased
         // scroll request, producing jerky motion instead of a glide.
@@ -251,20 +260,32 @@ export default function App() {
     projectsScrollRafRef.current = requestAnimationFrame(step);
   }
 
-  function stopProjectsAutoScroll() {
-    if (projectsScrollRafRef.current) {
-      cancelAnimationFrame(projectsScrollRafRef.current);
-      projectsScrollRafRef.current = null;
-    }
-    projectsScrollRef.current = { dir: null, speed: 0 };
+  // Row drifts to the right at a slow, constant pace by default — hovering
+  // takes over with the position-based speed/direction below, and leaving
+  // returns to this same ambient drift.
+  const PROJECTS_AMBIENT_SPEED = 0.5;
+
+  useEffect(() => {
+    projectsScrollRef.current = { dir: "right", speed: PROJECTS_AMBIENT_SPEED };
+    startProjectsAutoScroll();
+    return () => {
+      if (projectsScrollRafRef.current) {
+        cancelAnimationFrame(projectsScrollRafRef.current);
+        projectsScrollRafRef.current = null;
+      }
+    };
+  }, []);
+
+  function resumeProjectsAmbientScroll() {
+    projectsScrollRef.current = { dir: "right", speed: PROJECTS_AMBIENT_SPEED };
     const cursor = projectsCursorRef.current;
     if (cursor) cursor.classList.remove("is-visible");
   }
 
   function handleProjectsPointerActivity(event) {
-    // Auto-scrolling on mere hover is exactly the kind of motion
-    // prefers-reduced-motion exists to suppress — wheel/touch/scrollbar
-    // remain available since those are user-initiated, not automatic.
+    // Pauses the ambient drift in favor of position-based hover scroll —
+    // reduced-motion still gets the (much slower, constant) ambient drift
+    // from the effect above rather than this position-driven variant.
     if (prefersReducedMotionRef.current) return;
     const row = projectsRef.current;
     const cursor = projectsCursorRef.current;
@@ -287,6 +308,98 @@ export default function App() {
     cursor.classList.add("is-visible");
     cursor.classList.toggle("is-left", !isRight);
     startProjectsAutoScroll();
+  }
+
+  useEffect(() => {
+    const row = newsRef.current;
+    if (!row) return;
+
+    const setWidth = () => row.scrollWidth / 3;
+
+    function handleScroll() {
+      const w = setWidth();
+      // 1px tolerance — w rarely divides evenly, so sub-pixel scroll
+      // rounding right at the boundary would otherwise trigger a spurious wrap.
+      if (row.scrollLeft < w - 1) {
+        row.scrollTo({ left: row.scrollLeft + w, behavior: "instant" });
+      } else if (row.scrollLeft >= w * 2 + 1) {
+        row.scrollTo({ left: row.scrollLeft - w, behavior: "instant" });
+      }
+    }
+
+    row.scrollTo({ left: setWidth(), behavior: "instant" });
+    row.addEventListener("scroll", handleScroll, { passive: true });
+    return () => row.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Ticker drifts continuously to the right at a slow, constant pace by
+  // default — hovering takes over with the position-based speed/direction
+  // below, and leaving returns to this same ambient drift.
+  const NEWS_AMBIENT_SPEED = 0.4;
+
+  useEffect(() => {
+    newsScrollRef.current = { dir: "right", speed: NEWS_AMBIENT_SPEED };
+    startNewsAutoScroll();
+    return () => {
+      if (newsScrollRafRef.current) {
+        cancelAnimationFrame(newsScrollRafRef.current);
+        newsScrollRafRef.current = null;
+      }
+    };
+  }, []);
+
+  function handleNewsWheel(event) {
+    if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+    event.preventDefault();
+    newsRef.current?.scrollBy({ left: event.deltaY });
+  }
+
+  function startNewsAutoScroll() {
+    if (newsScrollRafRef.current) return;
+    function step() {
+      const row = newsRef.current;
+      const { dir, speed } = newsScrollRef.current;
+      if (row && dir && !prefersReducedMotionRef.current) {
+        const delta = dir === "right" ? speed : -speed;
+        row.scrollTo({ left: row.scrollLeft + delta, behavior: "instant" });
+      }
+      newsScrollRafRef.current = requestAnimationFrame(step);
+    }
+    newsScrollRafRef.current = requestAnimationFrame(step);
+  }
+
+  function resumeNewsAmbientScroll() {
+    // Called on mouseleave — return to the slow ambient drift instead of
+    // stopping outright, and hide the directional cursor.
+    newsScrollRef.current = { dir: "right", speed: NEWS_AMBIENT_SPEED };
+    const cursor = newsCursorRef.current;
+    if (cursor) cursor.classList.remove("is-visible");
+  }
+
+  function handleNewsPointerActivity(event) {
+    // Pauses the ambient drift in favor of position-based hover scroll —
+    // reduced-motion still gets the (much slower, constant) ambient drift
+    // from the effect above rather than this position-driven variant.
+    if (prefersReducedMotionRef.current) return;
+    const row = newsRef.current;
+    const cursor = newsCursorRef.current;
+    if (!row || !cursor) return;
+    const rect = row.getBoundingClientRect();
+    const ratio = (event.clientX - rect.left) / rect.width;
+    const isRight = ratio > 0.5;
+    const distanceFromCenter = Math.min(Math.abs(ratio - 0.5) * 2, 1);
+    // Slower than the Projects row — this is text people are meant to read
+    // while it scrolls by, not images to browse quickly.
+    const minSpeed = 0.4;
+    const maxSpeed = 2.5;
+    newsScrollRef.current = {
+      dir: isRight ? "right" : "left",
+      speed: minSpeed + distanceFromCenter ** 1.6 * (maxSpeed - minSpeed),
+    };
+    cursor.style.transform = `translate(${event.clientX}px, ${event.clientY}px) translate(-50%, -50%)`;
+    cursor.classList.add("is-visible");
+    cursor.classList.toggle("is-left", !isRight);
+    startNewsAutoScroll();
   }
 
   function handleThumbPointerDown(event) {
@@ -319,16 +432,44 @@ export default function App() {
     <main className="nc-page">
       <section className="nc-news" id="news" aria-label="In the press">
         <span className="nc-news-label">In the Press</span>
-        <div className="nc-news-window">
+        <div
+          className="nc-news-window"
+          ref={newsRef}
+          onWheel={handleNewsWheel}
+          onMouseEnter={handleNewsPointerActivity}
+          onMouseMove={handleNewsPointerActivity}
+          onMouseLeave={resumeNewsAmbientScroll}
+        >
           <div className="nc-track">
-            {newsLoop.map((item, index) => (
-              <a href={item.href} target="_blank" rel="noopener" key={`${item.source}-${index}`}>
-                <span>{item.source}</span>
-                <b>{item.text}</b>
-                <i aria-hidden="true">●</i>
-              </a>
-            ))}
+            {loopedNews.map(({ item, copy, i }) => {
+              const isBuffer = copy !== 1;
+              return (
+                <a
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener"
+                  aria-hidden={isBuffer ? true : undefined}
+                  tabIndex={isBuffer ? -1 : undefined}
+                  key={`${item.source}-${copy}-${i}`}
+                >
+                  <span>{item.source}</span>
+                  <b>{item.text}</b>
+                  <i aria-hidden="true">●</i>
+                </a>
+              );
+            })}
           </div>
+        </div>
+        <div className="nc-news-cursor" ref={newsCursorRef} aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <polyline
+              points="9,6 15,12 9,18"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </div>
       </section>
 
@@ -376,7 +517,7 @@ export default function App() {
           onWheel={handleProjectsWheel}
           onMouseEnter={handleProjectsPointerActivity}
           onMouseMove={handleProjectsPointerActivity}
-          onMouseLeave={stopProjectsAutoScroll}
+          onMouseLeave={resumeProjectsAmbientScroll}
         >
           {loopedProjects.map(({ film, copy, i }) => {
             // Only the middle copy is "real" — the other two exist purely as

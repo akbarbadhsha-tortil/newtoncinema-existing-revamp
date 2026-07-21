@@ -632,18 +632,56 @@ button {
 .nc-news-window {
   position: relative;
   flex: 1;
-  overflow: hidden;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.nc-news-window::-webkit-scrollbar {
+  display: none;
+}
+
+.nc-news-cursor {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(245, 241, 232, 0.25);
+  background: rgba(20, 20, 20, 0.75);
+  color: var(--cream);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+  will-change: transform;
+}
+
+.nc-news-cursor.is-visible {
+  opacity: 1;
+}
+
+.nc-news-cursor.is-left svg {
+  transform: scaleX(-1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .nc-news-window {
+    cursor: none;
+  }
+
+  .nc-news-cursor {
+    display: flex;
+  }
 }
 
 .nc-track {
   display: flex;
   width: max-content;
   align-items: center;
-  animation: ncticker 44s linear infinite;
-}
-
-.nc-track:hover {
-  animation-play-state: paused;
 }
 
 .nc-track a {
@@ -1165,15 +1203,6 @@ button {
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes ncticker {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
   }
 }
 
